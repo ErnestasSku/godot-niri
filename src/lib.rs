@@ -4,6 +4,7 @@ use godot::prelude::*;
 use crate::godot_niri::niri_ipc::NiriIPC;
 
 mod godot_niri;
+mod niri;
 
 struct GodotNiri;
 

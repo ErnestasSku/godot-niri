@@ -1,3 +1,4 @@
+use crate::niri::niri_types::NiriOutput;
 use godot::prelude::*;
 use niri_ipc::{Request, Response};
 
@@ -29,89 +30,70 @@ impl IObject for NiriIPC {
 fn normalize_response(
     resp: Result<Result<Response, String>, std::io::Error>,
 ) -> Result<Response, String> {
-    match resp {
-        Ok(Ok(r)) => Ok(r),
-        Ok(Err(protocol_err)) => Err(protocol_err),
-        Err(io_err) => Err(io_err.to_string()),
+    resp.map_err(|e| e.to_string())?
+}
+
+impl NiriIPC {
+    #[allow(dead_code)]
+    fn with_socket<T>(
+        &mut self,
+        default: T,
+        f: impl FnOnce(&mut niri_ipc::socket::Socket) -> T,
+    ) -> T {
+        match self.commands_socket.as_mut() {
+            Some(socket) => f(socket),
+            None => default,
+        }
     }
-}
 
-fn _extract_variant<R>(
-    response: Result<Response, String>,
-    extractor: impl FnOnce(Response) -> Option<R>,
-) -> Result<R, String> {
-    response.and_then(|resp| extractor(resp).ok_or_else(|| "Unexpected response variant".into()))
-}
+    fn with_response<T>(
+        &mut self,
+        request: Request,
+        default: T,
+        f: impl FnOnce(Response) -> Option<T>,
+    ) -> T {
+        let socket = match self.commands_socket.as_mut() {
+            Some(s) => s,
+            None => return default,
+        };
 
-#[derive(GodotClass)]
-#[class(no_init)]
-struct NiriOutput {
-    #[var]
-    pub name: GString,
-    #[var]
-    pub make: GString,
-    #[var]
-    pub model: GString,
-    #[var]
-    pub serial: GString,
-    #[var]
-    pub physical_size: PackedInt32Array,
-    #[var]
-    pub modes: PackedInt32Array, // TODO: implement mode
-    #[var]
-    pub current_mode: i32,
-    #[var]
-    pub is_custom_mode: bool,
-    #[var]
-    pub vrr_supported: bool,
-    #[var]
-    pub vrr_enabled: bool,
-    #[var]
-    pub logical: bool, // TODO: implement LogicalOutput
+        let resp = match normalize_response(socket.send(request)) {
+            Ok(r) => r,
+            Err(_) => return default,
+        };
 
-    base: Base<RefCounted>,
+        f(resp).unwrap_or(default)
+    }
 }
 
 #[godot_api]
 impl NiriIPC {
     #[func]
     fn get_version(&mut self) -> GString {
-        self.commands_socket
-            .as_mut()
-            .map_or(GString::default(), |socket| {
-                let raw_resp = socket.send(Request::Version);
-                let resp = normalize_response(raw_resp);
-
-                if let Ok(Response::Version(version)) = resp {
-                    GString::from(version.as_str())
-                } else {
-                    GString::default()
-                }
-            })
+        self.with_response(Request::Version, GString::default(), |resp| match resp {
+            Response::Version(v) => Some(GString::from(v.as_str())),
+            _ => None,
+        })
     }
 
     #[func]
     fn get_outputs(&mut self) -> VarDictionary {
-        self.commands_socket
-            .as_mut()
-            .map_or(VarDictionary::default(), |socket| {
-                let raw_resp = socket.send(Request::Outputs);
-                let resp = normalize_response(raw_resp);
-
-                if let Ok(Response::Outputs(outputs)) = resp {
-                    let mut dictionary = VarDictionary::default();
-
-                    for (name, output) in outputs {
-                        // TODO:
-                        let model = GString::from(output.model.as_str());
-                        let _ = dictionary.insert(GString::from(name.as_str()), model);
+        self.with_response(
+            Request::Outputs,
+            VarDictionary::default(),
+            |resp| match resp {
+                Response::Outputs(o) => {
+                    let mut dict = VarDictionary::default();
+                    for (name, output) in o {
+                        let niri_output = NiriOutput::from_output(output);
+                        let _ = dict.insert(name, niri_output);
                     }
 
-                    dictionary
-                } else {
-                    VarDictionary::default()
+                    Some(dict)
                 }
-            })
+                _ => None,
+            },
+        )
     }
 
     #[func]
