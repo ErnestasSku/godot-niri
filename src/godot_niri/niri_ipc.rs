@@ -1,3 +1,4 @@
+use crate::niri::from_niri_trait::FromNiri;
 use crate::niri::niri_types::NiriOutput;
 use godot::prelude::*;
 use niri_ipc::{Request, Response};
@@ -85,7 +86,7 @@ impl NiriIPC {
                 Response::Outputs(o) => {
                     let mut dict = VarDictionary::default();
                     for (name, output) in o {
-                        let niri_output = NiriOutput::from_output(output);
+                        let niri_output = NiriOutput::from_niri(output);
                         let _ = dict.insert(name, niri_output);
                     }
 
