@@ -83,3 +83,26 @@ pub enum NiriTransform {
     Flipped180,
     Flipped270,
 }
+
+#[derive(GodotClass)]
+#[class(no_init)]
+pub struct NiriWorkspace {
+    #[var]
+    pub id: i64,
+    #[var]
+    pub idx: u8,
+    #[var]
+    pub name: GString,
+    #[var]
+    pub output: GString,
+    #[var]
+    pub is_urgent: bool,
+    #[var]
+    pub is_active: bool,
+    #[var]
+    pub is_focused: bool,
+    #[var]
+    pub active_window_id: i64,
+
+    pub base: Base<RefCounted>,
+}

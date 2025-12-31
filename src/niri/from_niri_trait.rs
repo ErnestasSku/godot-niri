@@ -85,3 +85,23 @@ impl FromNiri<&niri_ipc::Mode> for NiriMode {
         })
     }
 }
+
+impl FromNiri<&niri_ipc::Workspace> for NiriWorkspace {
+    fn from_niri(workspace: &niri_ipc::Workspace) -> Gd<Self>
+    where
+        Self: Sized,
+        Self: godot::prelude::GodotClass,
+    {
+        Gd::from_init_fn(|base| Self {
+            id: workspace.id as i64,
+            idx: workspace.idx,
+            name: workspace.name.clone().unwrap_or_default().to_gstring(),
+            output: workspace.output.clone().unwrap_or_default().to_gstring(),
+            is_urgent: workspace.is_urgent,
+            is_active: workspace.is_active,
+            is_focused: workspace.is_focused,
+            active_window_id: workspace.active_window_id.unwrap_or_default() as i64,
+            base,
+        })
+    }
+}

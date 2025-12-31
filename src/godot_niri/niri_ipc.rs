@@ -1,5 +1,5 @@
-use crate::niri::from_niri_trait::FromNiri;
 use crate::niri::niri_types::NiriOutput;
+use crate::niri::{from_niri_trait::FromNiri, niri_types::NiriWorkspace};
 use godot::prelude::*;
 use niri_ipc::{Request, Response};
 
@@ -98,7 +98,15 @@ impl NiriIPC {
     }
 
     #[func]
-    fn get_workspaces() -> Vec<GString> {
-        todo!()
+    fn get_workspaces(&mut self) -> Array<Gd<NiriWorkspace>> {
+        self.with_response(Request::Workspaces, Array::default(), |resp| match resp {
+            Response::Workspaces(workspaces) => Some(
+                workspaces
+                    .iter()
+                    .map(|w| NiriWorkspace::from_niri(w))
+                    .collect::<Array<Gd<NiriWorkspace>>>(),
+            ),
+            _ => None,
+        })
     }
 }
