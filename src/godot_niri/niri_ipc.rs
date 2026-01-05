@@ -1,5 +1,5 @@
-use crate::niri::niri_types::NiriOutput;
-use crate::niri::{from_niri_trait::FromNiri, niri_types::NiriWorkspace};
+use crate::niri::from_niri_trait::FromNiri;
+use crate::niri::niri_types::*;
 use godot::prelude::*;
 use niri_ipc::{Request, Response};
 
@@ -105,6 +105,19 @@ impl NiriIPC {
                     .iter()
                     .map(|w| NiriWorkspace::from_niri(w))
                     .collect::<Array<Gd<NiriWorkspace>>>(),
+            ),
+            _ => None,
+        })
+    }
+
+    #[func]
+    fn get_windows(&mut self) -> Array<Gd<NiriWindow>> {
+        self.with_response(Request::Windows, Array::default(), |resp| match resp {
+            Response::Windows(windows) => Some(
+                windows
+                    .iter()
+                    .map(|w| NiriWindow::from_niri(w))
+                    .collect::<Array<Gd<NiriWindow>>>(),
             ),
             _ => None,
         })

@@ -106,3 +106,68 @@ pub struct NiriWorkspace {
 
     pub base: Base<RefCounted>,
 }
+
+#[derive(GodotClass)]
+#[class(no_init)]
+pub struct NiriWindow {
+    #[var]
+    pub id: i64,
+    #[var]
+    pub title: GString,
+    #[var]
+    pub app_id: GString,
+    #[var]
+    pub pid: i32,
+    #[var]
+    pub workspace_id: i64,
+    #[var]
+    pub is_focused: bool,
+    #[var]
+    pub is_floating: bool,
+    #[var]
+    pub is_urgent: bool,
+    #[var]
+    pub layout: Gd<NiriWindowLayout>,
+    #[var]
+    pub focus_timestamp: Gd<NiriTimestamp>,
+
+    pub base: Base<RefCounted>,
+}
+
+#[derive(GodotClass)]
+#[class(no_init)]
+pub struct NiriWindowLayout {
+    #[var]
+    pub pos_in_scrolling_layout_x: i64,
+    #[var]
+    pub pos_in_scrolling_layout_y: i64,
+    #[var]
+    pub tile_size_x: f64,
+    #[var]
+    pub tile_size_y: f64,
+    #[var]
+    pub window_size_x: i32,
+    #[var]
+    pub window_size_y: i32,
+    #[var]
+    pub tile_pos_in_workspace_view_x: f64,
+    #[var]
+    pub tile_pos_in_workspace_view_y: f64,
+    #[var]
+    pub window_offset_in_tile_x: f64,
+    #[var]
+    pub window_offset_in_tile_y: f64,
+
+    pub base: Base<RefCounted>,
+}
+
+#[derive(GodotClass)]
+#[class(no_init)]
+pub struct NiriTimestamp {
+    #[var]
+    pub secs: i64,
+    #[var]
+    pub nanos: i64,
+
+    pub base: Base<RefCounted>,
+}

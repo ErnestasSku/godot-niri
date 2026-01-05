@@ -105,3 +105,66 @@ impl FromNiri<&niri_ipc::Workspace> for NiriWorkspace {
         })
     }
 }
+
+impl FromNiri<&niri_ipc::Window> for NiriWindow {
+    fn from_niri(window: &niri_ipc::Window) -> Gd<Self>
+    where
+        Self: Sized,
+        Self: godot::prelude::GodotClass,
+    {
+        Gd::from_init_fn(|base| Self {
+            id: window.id as i64,
+            title: window.title.clone().unwrap_or_default().to_gstring(),
+            app_id: window.app_id.clone().unwrap_or_default().to_gstring(),
+            pid: window.pid.unwrap_or_default() as i32,
+            workspace_id: window.workspace_id.unwrap_or_default() as i64,
+            is_focused: window.is_focused,
+            is_floating: window.is_floating,
+            is_urgent: window.is_urgent,
+            layout: NiriWindowLayout::from_niri(&window.layout),
+            focus_timestamp: NiriTimestamp::from_niri(&window.focus_timestamp.unwrap_or(
+                niri_ipc::Timestamp {
+                    secs: u64::default(),
+                    nanos: u32::default(),
+                },
+            )),
+            base,
+        })
+    }
+}
+
+impl FromNiri<&niri_ipc::WindowLayout> for NiriWindowLayout {
+    fn from_niri(layout: &niri_ipc::WindowLayout) -> Gd<Self>
+    where
+        Self: Sized,
+        Self: godot::prelude::GodotClass,
+    {
+        Gd::from_init_fn(|base| Self {
+            pos_in_scrolling_layout_x: layout.pos_in_scrolling_layout.unwrap_or_default().0 as i64,
+            pos_in_scrolling_layout_y: layout.pos_in_scrolling_layout.unwrap_or_default().1 as i64,
+            tile_size_x: layout.tile_size.0,
+            tile_size_y: layout.tile_size.1,
+            window_size_x: layout.window_size.0,
+            window_size_y: layout.window_size.1,
+            tile_pos_in_workspace_view_x: layout.tile_pos_in_workspace_view.unwrap_or_default().0,
+            tile_pos_in_workspace_view_y: layout.tile_pos_in_workspace_view.unwrap_or_default().1,
+            window_offset_in_tile_x: layout.window_offset_in_tile.0,
+            window_offset_in_tile_y: layout.window_offset_in_tile.1,
+            base,
+        })
+    }
+}
+
+impl FromNiri<&niri_ipc::Timestamp> for NiriTimestamp {
+    fn from_niri(timestamp: &niri_ipc::Timestamp) -> Gd<Self>
+    where
+        Self: Sized,
+        Self: godot::prelude::GodotClass,
+    {
+        Gd::from_init_fn(|base| Self {
+            secs: timestamp.secs as i64,
+            nanos: timestamp.nanos as i64,
+            base,
+        })
+    }
+}
